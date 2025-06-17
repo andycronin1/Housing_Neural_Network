@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import date, datetime
 
+from dask.array import average
 from dotenv import load_dotenv
 from pandas.io.sas.sas_constants import column_name_text_subheader_length
+from sqlalchemy.cyextension.resultproxy import rowproxy_reconstructor
 from tensorflow.python.ops.ragged.ragged_embedding_ops import embedding_lookup_sparse
 
 load_dotenv()
@@ -65,17 +67,49 @@ class DataCleaningPipeline:
         # Once you've created it, see if visualize it with a [bar plot](https://pandas.pydata.org/pandas-docs/version/0.23.4/generated/pandas.DataFrame.plot.html).
         # This may be tricky, refer to solutions if you get stuck on creating this Series.**s
 
-        dummy_data = self.data[['loan_status', 'emp_length']]
-        dummy_data['Numerated'] = [True if x=='Charged Off' else False for x in dummy_data['loan_status']]
+        # dummy_data = self.data[['loan_status', 'emp_length']]
+        # dummy_data['Numerated'] = [True if x=='Charged Off' else False for x in dummy_data['loan_status']]
+        #
+        # percentage_data = dummy_data.groupby('emp_length')['Numerated'].mean().reset_index()
+        # percentage_data.set_index('emp_length', inplace=True)
+        # sns.barplot(data=percentage_data, x='emp_length', y='Numerated', order=emp_length_order, palette='coolwarm')
+        # # plt.show()
 
-        percentage_data = dummy_data.groupby('emp_length')['Numerated'].mean().reset_index()
-        percentage_data.set_index('emp_length', inplace=True)
-        sns.barplot(data=percentage_data, x='emp_length', y='Numerated', order=emp_length_order, palette='coolwarm')
-        plt.show()
+        # Charge off rates are extremely similar across all employment lengths. So we can drop the emp_length column.
+        self.data.drop(columns=['emp_length'], inplace=True)
 
+
+        # The title column is simply a string subcategory/description of the purpose column. so we can drop the title column.
+        self.data.drop(columns=['title'], inplace=True)
+
+        # mort_acc review and missing data fill
+        print(f' Mort_acc description: {self.info_data.loc['mort_acc']['Description']}')
+
+        mort_acc_val_counts = self.data['mort_acc'].value_counts()
+
+        correlation_matrix = self.data.corr(numeric_only=True)
+
+        # Let's fill in the missing mort_acc values based on their total_acc value as the total_acc value correlates the best with mort_acc.
+
+        average_mort_acc = self.data.groupby('total_acc')['mort_acc'].mean()
+
+        # Create a function to fill missing mort_acc values based on total_acc
+
+        def fill_mort_acc(total_acc, mort_acc):
+
+            if pd.isna(mort_acc):
+                return average_mort_acc.loc[total_acc]
+            else:
+                return mort_acc
+
+        # Apply the function to fill missing mort_acc values
+        self.data['mort_acc'] = self.data.apply(lambda row: fill_mort_acc(row['total_acc'], row['mort_acc']), axis=1)
 
 
         a=1
+
+
+
 
 
 
