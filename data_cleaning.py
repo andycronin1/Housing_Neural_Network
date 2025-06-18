@@ -105,13 +105,12 @@ class DataCleaningPipeline:
         # Apply the function to fill missing mort_acc values
         self.data['mort_acc'] = self.data.apply(lambda row: fill_mort_acc(row['total_acc'], row['mort_acc']), axis=1)
 
+        # revol_util and pub_rec_bankruptcies account for less than 0.5% of the total data so we can remove the rows that are missing those values.
+        self.data.dropna(subset=['revol_util', 'pub_rec_bankruptcies'], inplace=True)
 
-        a=1
+        print(self.data.isnull().sum())
 
-
-
-
-
+        # Clraning completed
 
     def run(self):
         pass
