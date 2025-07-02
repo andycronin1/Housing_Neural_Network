@@ -125,6 +125,7 @@ class DataCleaningPipeline:
         # converting home_ownership to dummy variables, but replacing NONE and ANY with OTHER.
         self.data['home_ownership'].apply(lambda x: x == 'OTHER' if x == 'NONE' or 'ANY' else x)
         print(self.data['home_ownership'].value_counts)
+        self.data.drop(columns='home_ownership', axis=1, inplace=True)
 
         # Feature engineering a zip code column from the address column.
         self.data['zip_code'] = self.data['address'].apply(lambda x : x[-5:])

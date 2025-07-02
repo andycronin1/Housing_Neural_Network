@@ -42,12 +42,9 @@ class MLPipeline:
         self.y_train = None
         self.y_test = None
 
-
-
-
     def test_train_split(self):
         # Setting X and y variables to the .values of the features and label
-        self.X = self.data.drop('loan_repaid', axis=1, inplace=True).values
+        self.X = self.data.drop(columns='loan_repaid', axis=1).values
         self.y = self.data['loan_repaid'].values
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.20, random_state=101)
 
