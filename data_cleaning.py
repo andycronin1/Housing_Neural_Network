@@ -109,18 +109,18 @@ class DataCleaningPipeline:
         self.data['term'] = self.data['term'].apply(lambda term: int(term[:3]))
 
         ### We already know grade is part of sub_grad, so we can just drop the grade feature
-        self.data = self.data.drop('grade', axis = 1)
+        self.data.drop(columns=['grade'], axis=1, inplace=True)
 
         # Convert the subgrade into dummy variables
         subgrade_dummies = pd.get_dummies(self.data['sub_grade'], drop_first=True)
 
         self.data = pd.concat([self.data, subgrade_dummies], axis = 1)
-        self.data.drop('sub_grade', axis=1)
+        self.data.drop(columns=['sub_grade'], axis=1, inplace=True)
 
         # Converting ['verification_status', 'application_type','initial_list_status','purpose'] into dummy variables
         other_dummies = pd.get_dummies(self.data[['verification_status', 'application_type','initial_list_status','purpose']], drop_first=True)
         self.data = pd.concat([self.data, other_dummies], axis=1)
-        self.data.drop(['verification_status', 'application_type','initial_list_status','purpose'], axis=1)
+        self.data.drop(['verification_status', 'application_type','initial_list_status','purpose'], axis=1, inplace=True)
 
         # converting home_ownership to dummy variables, but replacing NONE and ANY with OTHER.
         self.data['home_ownership'].apply(lambda x: x == 'OTHER' if x == 'NONE' or 'ANY' else x)
@@ -131,10 +131,10 @@ class DataCleaningPipeline:
         # Make zip code dummy variables
         zip_dummies = pd.get_dummies(self.data['zip_code'], drop_first=True)
         self.data = pd.concat([self.data, zip_dummies], axis=1)
-        self.data.drop(['zip_code', 'address'], axis=1)
+        self.data.drop(columns=['zip_code', 'address'], axis=1, inplace=True)
 
         # Dropping issue_d column
-        self.data.drop('issue_d', axis=1)
+        self.data.drop('issue_d', axis=1, inplace=True)
 
         self.data['earliest_cr_line'] = pd.to_numeric(self.data['earliest_cr_line'].apply(lambda x: x[-4:]))
 
@@ -142,7 +142,9 @@ class DataCleaningPipeline:
         # feature engineering completed.
 
     def final_fixes(self):
-        self.data.drop('loan_status', axis=1)
+        # create loan repaid column. 1 for fully paid. 0 for charged off.
+        self.data['loan_repaid'] = self.data['loan_status'].apply(lambda x: 1 if x == 'Fully Paid' else 0)
+        self.data.drop(columns='loan_status', axis=1, inplace=True)
 
 
     def run(self):

@@ -4,14 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import date, datetime
+import tensorflow
 from data_cleaning import DataCleaningPipeline
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Activation,Dropout
-from tensorflow.keras.constraints import max_norm
+import keras
+from keras import layers
+from keras import ops
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense, Activation,Dropout
+# from tensorflow.keras.constraints import max_norm
 
 load_dotenv()
 
@@ -31,7 +34,7 @@ class MLPipeline:
             self.data = self.data_pipeline.data
             del self.data_pipeline
 
-        self.model = Sequential()
+        self.model = keras.Sequential()
         self.X = None
         self.y = None
         self.X_train = None
@@ -44,7 +47,7 @@ class MLPipeline:
 
     def test_train_split(self):
         # Setting X and y variables to the .values of the features and label
-        self.X = self.data.drop('loan_repaid', axis=1).values
+        self.X = self.data.drop('loan_repaid', axis=1, inplace=True).values
         self.y = self.data['loan_repaid'].values
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.X, self.y, test_size=0.20, random_state=101)
 
@@ -58,19 +61,19 @@ class MLPipeline:
         # https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
 
         # input layer
-        self.model.add(Dense(78, activation='relu'))
-        self.model.add(Dropout(0.2))
+        self.model.add(layers.Dense(78, activation='relu'))
+        self.model.add(layers.Dropout(0.2))
 
         # hidden layer
-        self.model.add(Dense(39, activation='relu'))
-        self.model.add(Dropout(0.2))
+        self.model.add(layers.Dense(39, activation='relu'))
+        self.model.add(layers.Dropout(0.2))
 
         # hidden layer
-        self.model.add(Dense(19, activation='relu'))
-        self.model.add(Dropout(0.2))
+        self.model.add(layers.Dense(19, activation='relu'))
+        self.model.add(layers.Dropout(0.2))
 
         # output layer
-        self.model.add(Dense(units=1, activation='sigmoid'))
+        self.model.add(layers.Dense(units=1, activation='sigmoid'))
 
         # Compile model
         self.model.compile(loss='binary_crossentropy', optimizer='adam')
