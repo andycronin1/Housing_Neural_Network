@@ -4,12 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import date, datetime
-
-from dask.array import average
 from dotenv import load_dotenv
-from pandas.io.sas.sas_constants import column_name_text_subheader_length
-from sqlalchemy.cyextension.resultproxy import rowproxy_reconstructor
-from tensorflow.python.ops.ragged.ragged_embedding_ops import embedding_lookup_sparse
+
 
 load_dotenv()
 
@@ -59,14 +55,6 @@ class DataCleaningPipeline:
         # sns.countplot(data=self.data, x='emp_length', order=emp_length_order, palette='coolwarm', hue='loan_status')
         # plt.show()
 
-        # **CHALLENGE TASK: \
-        # This still doesn't really inform us if there is a strong relationship between employment length and being charged off,
-        # what we want is the percentage of charge offs per category.
-        # Essentially informing us what percent of people per employment length category didn't pay back their loan.
-        # There are a multitude of ways to create this Series.
-        # Once you've created it, see if visualize it with a [bar plot](https://pandas.pydata.org/pandas-docs/version/0.23.4/generated/pandas.DataFrame.plot.html).
-        # This may be tricky, refer to solutions if you get stuck on creating this Series.**s
-
         # dummy_data = self.data[['loan_status', 'emp_length']]
         # dummy_data['Numerated'] = [True if x=='Charged Off' else False for x in dummy_data['loan_status']]
         #
@@ -110,14 +98,64 @@ class DataCleaningPipeline:
 
         print(self.data.isnull().sum())
 
-        # Clraning completed
+        # Cleaning completed
+
+    def string_value_fixing(self):
+
+        # Listing all non-numeric values
+        print(self.data.select_dtypes(['object']).columns)
+
+        # Convert the term feature into a integer numeric data type.
+        self.data['term'] = self.data['term'].apply(lambda term: int(term[:3]))
+
+        ### We already know grade is part of sub_grad, so we can just drop the grade feature
+        self.data = self.data.drop('grade', axis = 1)
+
+        # Convert the subgrade into dummy variables
+        subgrade_dummies = pd.get_dummies(self.data['sub_grade'], drop_first=True)
+
+        self.data = pd.concat([self.data, subgrade_dummies], axis = 1)
+        self.data.drop('sub_grade', axis=1)
+
+        # Converting ['verification_status', 'application_type','initial_list_status','purpose'] into dummy variables
+        other_dummies = pd.get_dummies(self.data[['verification_status', 'application_type','initial_list_status','purpose']], drop_first=True)
+        self.data = pd.concat([self.data, other_dummies], axis=1)
+        self.data.drop(['verification_status', 'application_type','initial_list_status','purpose'], axis=1)
+
+        # converting home_ownership to dummy variables, but replacing NONE and ANY with OTHER.
+        self.data['home_ownership'].apply(lambda x: x == 'OTHER' if x == 'NONE' or 'ANY' else x)
+        print(self.data['home_ownership'].value_counts)
+
+        # Feature engineering a zip code column from the address column.
+        self.data['zip_code'] = self.data['address'].apply(lambda x : x[-5:])
+        # Make zip code dummy variables
+        zip_dummies = pd.get_dummies(self.data['zip_code'], drop_first=True)
+        self.data = pd.concat([self.data, zip_dummies], axis=1)
+        self.data.drop(['zip_code', 'address'], axis=1)
+
+        # Dropping issue_d column
+        self.data.drop('issue_d', axis=1)
+
+        self.data['earliest_cr_line'] = pd.to_numeric(self.data['earliest_cr_line'].apply(lambda x: x[-4:]))
+
+
+        # feature engineering completed.
+
+    def final_fixes(self):
+        self.data.drop('loan_status', axis=1)
+
 
     def run(self):
-        pass
+        self.analyse_nulls()
+        self.string_value_fixing()
+        self.final_fixes()
+        print("Data cleaning pipeline completed.")
 
 if __name__ == "__main__":
     pipeline = DataCleaningPipeline()
     pipeline.analyse_nulls()
+    pipeline.string_value_fixing()
+    pipeline.final_fixes()
     print("Data cleaning pipeline completed.")
     # You can add more methods to the class to perform specific cleaning tasks.
     # For example, you could add methods to handle missing values, outliers, etc.
