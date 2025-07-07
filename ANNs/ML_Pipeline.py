@@ -72,7 +72,7 @@ class MLPipeline:
         # output layer
         self.model.add(layers.Dense(units=1, activation='sigmoid'))
 
-        # Compile model
+        # configure model (compile basically means configure)
         self.model.compile(loss='binary_crossentropy', optimizer='adam')
 
     def model_fitting(self):
