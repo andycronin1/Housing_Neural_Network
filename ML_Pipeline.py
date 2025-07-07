@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import date, datetime
 import tensorflow
+import traceback
 from data_cleaning import DataCleaningPipeline
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
@@ -15,19 +16,32 @@ from keras import ops
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense, Activation,Dropout
 # from tensorflow.keras.constraints import max_norm
+import logging
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 BASE_DIR = os.getenv('BASE')
 
 class MLPipeline:
-    def __init__(self, data_input=None, base_dir=None):
+    def __init__(self, base_dir=None):
         if base_dir is None:
             self.base_dir = BASE_DIR
         else:
             self.base_dir = base_dir
 
-        if data_input == None:
+        self.saved_model = None
+
+        try:
+            self.saved_model = keras.models.load_model(f'{self.base_dir}/DATA/saved_keras_model.h5')
+            logger.info("Model loaded successfully!")
+        except FileNotFoundError:
+            logger.info("Error: Model file not found. Running model training...")
+        except Exception as e:
+            logger.info(f"Error loading model: {e}")
+            traceback.print_exc()
+
+        if self.saved_model == None:
             print('No data input. Running data pipeline and assigning default data')
             self.data_pipeline = DataCleaningPipeline()
             self.data_pipeline.run()
@@ -76,6 +90,7 @@ class MLPipeline:
         self.model.compile(loss='binary_crossentropy', optimizer='adam')
 
     def model_fitting(self):
+        logger.info('Picked data not found')
         self.model.fit(x=self.X_train,
                   y=self.y_train,
                   epochs=25,
@@ -83,9 +98,19 @@ class MLPipeline:
                   validation_data=(self.X_test, self.y_test),
                   )
 
+        self.model.save(f'{self.base_dir}/DATA/saved_keras_model.h5')
+
+
+
+    def run(self):
+        if self.saved_model == None:
+            self.test_train_split()
+            self.model_build()
+            self.model_fitting()
+        else:
+            logger.info('Data already loaded')
+
 
 if __name__ == "__main__":
     ML_obj = MLPipeline()
-    ML_obj.test_train_split()
-    ML_obj.model_build()
-    ML_obj.model_fitting()
+    ML_obj.run()
