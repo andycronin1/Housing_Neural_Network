@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import keras
 from keras import layers
+import pickle
 from keras import ops
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense, Activation,Dropout
@@ -33,8 +34,8 @@ class MLPipeline:
         self.saved_model = None
 
         try:
-            self.saved_model = keras.models.load_model(f'{self.base_dir}/DATA/saved_keras_model.h5')
-            logger.info("Model loaded successfully!")
+            self.saved_model = keras.models.load_model(f'{self.base_dir}/DATA/saved_keras_model.keras')
+            print("Model loaded successfully!")
         except FileNotFoundError:
             logger.info("Error: Model file not found. Running model training...")
         except Exception as e:
@@ -95,10 +96,15 @@ class MLPipeline:
                   y=self.y_train,
                   epochs=25,
                   batch_size=256,
-                  validation_data=(self.X_test, self.y_test),
+                  validation_split=0.1,
                   )
 
-        self.model.save(f'{self.base_dir}/DATA/saved_keras_model.h5')
+        with open(f'{self.base_dir}/DATA/history.pkl', 'wb') as f:
+            pickle.dump(self.model.history, f)
+
+        a=1
+
+        self.model.save(f'{self.base_dir}/DATA/saved_keras_model.keras')
 
 
 
@@ -108,7 +114,7 @@ class MLPipeline:
             self.model_build()
             self.model_fitting()
         else:
-            logger.info('Data already loaded')
+            print('Run Method not run. Data already loaded')
 
 
 if __name__ == "__main__":
