@@ -11,6 +11,7 @@ class DatabaseConnector:
         self.cur = None
         self.user = os.getenv('POSTGRES_USER')
         self.password = os.getenv('POSTGRES_PASSWORD')
+        self.connect()
 
     def connect(self):
         self.conn = pg2.connect(host='localhost', database=self.db_name, user=self.user, password=self.password)
@@ -18,10 +19,10 @@ class DatabaseConnector:
 
     def fetch_all_data(self):
         full_db_data = self.cur.execute('SELECT * FROM advanced_housing')
+        a=1
         return full_db_data
 
 if __name__ == 'main':
     dbc = DatabaseConnector(db_name='advanced_housing')
     data = dbc.fetch_all_data()
-    a=1
 
