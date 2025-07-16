@@ -1,10 +1,4 @@
 import os
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import date, datetime
-import tensorflow
 import traceback
 from data_cleaning import DataCleaningPipeline
 from dotenv import load_dotenv
@@ -14,15 +8,12 @@ import keras
 from keras import layers
 import pickle
 from keras import ops
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.layers import Dense, Activation,Dropout
-# from tensorflow.keras.constraints import max_norm
 import logging
 logger = logging.getLogger(__name__)
-
 load_dotenv()
-
 BASE_DIR = os.getenv('BASE')
+
+# TODO: Export the csv data to a postgresql database and import data from there
 
 class MLPipeline:
     def __init__(self, base_dir=None):
@@ -101,9 +92,6 @@ class MLPipeline:
 
         with open(f'{self.base_dir}/DATA/history.pkl', 'wb') as f:
             pickle.dump(self.model.history, f)
-
-        a=1
-
         self.model.save(f'{self.base_dir}/DATA/saved_keras_model.keras')
 
 
@@ -115,6 +103,8 @@ class MLPipeline:
             self.model_fitting()
         else:
             print('Run Method not run. Data already loaded')
+
+
 
 
 if __name__ == "__main__":

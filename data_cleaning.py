@@ -1,15 +1,13 @@
 import os
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import date, datetime
 from dotenv import load_dotenv
-
+from Database_Connector import DatabaseConnector
 
 load_dotenv()
 
 BASE_DIR = os.getenv('BASE')
+
+# TODO: Export the csv data to a postgresql database and import data from there
 
 class DataCleaningPipeline:
     def __init__(self, base_dir=None):
@@ -147,6 +145,11 @@ class DataCleaningPipeline:
         self.data['loan_repaid'] = self.data['loan_status'].apply(lambda x: 1 if x == 'Fully Paid' else 0)
         self.data.drop(columns='loan_status', axis=1, inplace=True)
 
+    def fetch_data(self):
+        db_connector = DatabaseConnector(db_name='ML_data')
+        data = db_connector.fetch_all_data()
+        a=1
+
 
     def run(self):
         self.analyse_nulls()
@@ -156,10 +159,11 @@ class DataCleaningPipeline:
 
 if __name__ == "__main__":
     pipeline = DataCleaningPipeline()
-    pipeline.analyse_nulls()
-    pipeline.string_value_fixing()
-    pipeline.final_fixes()
-    print("Data cleaning pipeline completed.")
+    # pipeline.analyse_nulls()
+    # pipeline.string_value_fixing()
+    # pipeline.final_fixes()
+    # print("Data cleaning pipeline completed.")
+    pipeline.fetch_data()
     # You can add more methods to the class to perform specific cleaning tasks.
     # For example, you could add methods to handle missing values, outliers, etc.
 
