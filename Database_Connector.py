@@ -1,7 +1,7 @@
 import os
+import pandas as pd
 from dotenv import load_dotenv
 load_dotenv()
-BASE_DIR = os.getenv('BASE')
 import psycopg2 as pg2
 
 class DatabaseConnector:
@@ -18,11 +18,12 @@ class DatabaseConnector:
         self.cur = self.conn.cursor()
 
     def fetch_all_data(self):
-        full_db_data = self.cur.execute('SELECT * FROM advanced_housing')
-        a=1
-        return full_db_data
+        self.cur.execute("SELECT * FROM advanced_housing")
+        full_db_data = self.cur.fetchall()
+        return pd.DataFrame(full_db_data, columns=[desc[0] for desc in self.cur.description])
 
 if __name__ == 'main':
     dbc = DatabaseConnector(db_name='advanced_housing')
     data = dbc.fetch_all_data()
+    a=1
 
